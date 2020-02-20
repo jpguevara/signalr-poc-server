@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using signalr_server.Hubs;
 using Swashbuckle.AspNetCore;
 
 namespace signalr_server
@@ -28,11 +29,22 @@ namespace signalr_server
     public void ConfigureServices(IServiceCollection services)
     {
       services.AddControllers();
+      services.AddSignalR();
+
       // Register the Swagger generator, defining 1 or more Swagger documents
       services.AddSwaggerGen(c =>
       {
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
       });
+
+      services.AddCors(options =>
+   {
+     options.AddPolicy("CorsPolicy", builder => builder
+      .WithOrigins("http://localhost:4200")
+      .AllowAnyMethod()
+      .AllowAnyHeader()
+      .AllowCredentials());
+   });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -59,10 +71,12 @@ namespace signalr_server
       app.UseRouting();
 
       app.UseAuthorization();
+      app.UseCors("CorsPolicy");
 
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllers();
+        endpoints.MapHub<NotificationHub>("/notificationsHub");
       });
     }
   }
